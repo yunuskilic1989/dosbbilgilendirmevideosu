@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMB Bilgilendirme Videosu </title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Barlow+Condensed:wght@600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --steel:    #1C2B3A;
+    --iron:     #2E3F50;
+    --spark:    #E8500A;
+    --spark-lt: #FF6B2B;
+    --silver:   #8FA3B1;
+    --white:    #FFFFFF;
+    --radius:   6px;
+    --shadow:   0 4px 24px rgba(0,0,0,0.18);
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--steel);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+
+  body {
+    margin: 0;
+    height: 100vh;
+}
+
+
+  .logo-image {
+    height: 40px;
+    width: auto;
+    margin-right: 15px;
+  }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+  }
+
+  .step { display: none; }
+  .step.active { display: block; }
+
+  .card {
+    background: var(--iron);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+  }
+
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--spark); text-transform: uppercase; margin-bottom: 8px;
+  }
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--silver); font-size: 14px; margin-bottom: 28px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.06em;
+    color: var(--silver); text-transform: uppercase; margin-bottom: 6px;
+  }
+  input {
+    width: 100%;
+    background: var(--steel);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    color: var(--white);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus { border-color: var(--spark); }
+  input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--spark);
+    color: #fff;
+    border: none; border-radius: var(--radius);
+    padding: 13px 28px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    width: 100%; margin-top: 22px;
+    transition: background 0.2s, transform 0.1s;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn:hover { background: var(--spark-lt); }
+  .btn:active { transform: scale(0.98); }
+
+  .video-header {
+    margin-bottom: 20px;
+    background: rgba(46,63,80,.90);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  /* YouTube API ile oluşturulan iframe'e stil */
+  .video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Progress bar — daha büyük ve belirgin */
+  .progress-bar-wrap {
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    height: 18px;
+    margin-top: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--spark), var(--spark-lt));
+    width: 0%;
+    transition: width 1s linear;
+    border-radius: 6px;
+  }
+  .progress-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Sekme gizli uyarısı */
+  .tab-warning {
+    display: none;
+    background: rgba(232,80,10,0.18);
+    border: 1px solid var(--spark);
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--spark-lt);
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 500;
+  }
+  .tab-warning.show { display: block; }
+
+  .info-box {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--white);
+    margin-top: 16px;
+  }
+
+  .success-card {
+    text-align: center;
+    background: var(--iron);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 56px 32px;
+    box-shadow: var(--shadow);
+  }
+  .checkmark {
+    width: 64px; height: 64px;
+    background: rgba(34,197,94,0.15);
+    border: 2px solid #22c55e;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+  }
+  .success-card h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 26px; margin-bottom: 10px;
+  }
+  .success-card p { color: var(--silver); font-size: 14px; }
+
+  #sending-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(28,43,58,0.85);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  #sending-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: var(--spark);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    .card, .success-card { padding: 24px 18px; }
+    main { padding: 32px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<main>
+
+  <!-- STEP 1: FORM -->
+  <div class="step active" id="step-form">
+    <div class="card">
+      <p class="eyebrow">SMB Bilgilendirme Videosu</p>
+      <h1>Kayıt Formu</h1>
+      <p class="subtitle">Videoyu izlemeden önce lütfen bilgilerinizi doldurunuz.</p>
+
+      <div class="form-grid">
+        <div>
+          <label for="isim">Ad</label>
+          <input type="text" id="isim" placeholder="Adınız" autocomplete="given-name">
+        </div>
+        <div>
+          <label for="soyisim">Soyad</label>
+          <input type="text" id="soyisim" placeholder="Soyadınız" autocomplete="family-name">
+        </div>
+        <div>
+          <label for="gorusulecekkisi">Görüşülecek Kişi</label>
+          <input type="text" id="gorusulecekkisi" placeholder="Görüşülecek Kişi" autocomplete="family-name">
+        </div>
+        <div>
+          <label for="telefon">Telefon Numaranız</label>
+          <input type="tel" id="telefon" placeholder="05XX XXX XX XX" autocomplete="tel">
+        </div>
+        <div class="full">
+          <label for="firma">Çalıştığınız Firma</label>
+          <input type="text" id="firma" placeholder="Firma adınız" autocomplete="organization">
+        </div>
+      </div>
+
+      <button class="btn" onclick="formGonder()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/>
+        </svg>
+        Videoyu İzlemeye Başla
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2: VIDEO -->
+  <div class="step" id="step-video">
+    <div class="video-header">
+      <p class="eyebrow">SMB Bilgilendirme Videosu</p>
+      <h1>Lütfen videoyu sonuna kadar izleyiniz</h1>
+      <p class="subtitle" style="margin-bottom:0">Video tamamlandığında kayıt yetkililere otomatik olarak gönderilecektir.</p>
+    </div>
+
+    <!-- YouTube IFrame API buraya player ekleyecek -->
+    <div class="video-wrap">
+      <div id="ytPlayer"></div>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p class="progress-label" id="progressLabel">%0 izlendi — Video oynatılmayı bekliyor</p>
+
+    <!-- Sekme gizlenince gösterilecek uyarı -->
+    <div class="tab-warning" id="tabWarning">
+      ⏸ Sekmeyi kapattığınız için video duraklatıldı. Lütfen geri dönün.
+    </div>
+
+    <div class="info-box">
+      ℹ️ Video tamamlanmadan sayfayı kapatmayınız. Erken kapatırsanız baştan izlemek zorunda kalırsınız.
+    </div>
+  </div>
+
+  <!-- STEP 3: SUCCESS -->
+  <div class="step" id="step-success">
+    <div class="success-card">
+      <div class="checkmark">✓</div>
+      <h2>Teşekkürler!</h2>
+      <p>Kaydınız başarıyla alındı.<br>Bilgilendirme videosu izleme kaydınız sisteme işlenmiştir.</p>
+    </div>
+  </div>
+
+</main>
+
+<div id="sending-overlay">
+  <div class="spinner"></div>
+  <p style="color:var(--silver);font-size:14px">Kaydınız gönderiliyor...</p>
+</div>
+
+<script>
+  emailjs.init("o29bBn8G55wsplpLE");
+
+  const SERVICE_ID  = "service_39tdxyc";
+  const TEMPLATE_ID = "template_2sxa4gf";
+  const VIDEO_ID    = "QVCDcUU-z_Y";
+  const VIDEO_SURE  = 193; // saniye (3dk 13sn)
+  const TAMAMLANMA_ESIGI = 0.99; // %100'de mail gönder
+
+  let userData       = {};
+  let mailGonderildi = false;
+  let gecenSure      = 0;   // sadece video OYNARKEN artar
+  let timerInterval  = null;
+  let player         = null;
+  let videoOynuyor   = false;
+
+  // ── Adım yönetimi ───────────────────────────────────────────
+  function showStep(id) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Form gönder ─────────────────────────────────────────────
+  function formGonder() {
+    const isim            = document.getElementById('isim').value.trim();
+    const soyisim         = document.getElementById('soyisim').value.trim();
+    const gorusulecekkisi = document.getElementById('gorusulecekkisi').value.trim();
+    const telefon         = document.getElementById('telefon').value.trim();
+    const firma           = document.getElementById('firma').value.trim();
+
+    if (!isim || !soyisim || !gorusulecekkisi || !telefon || !firma) {
+      alert('Lütfen tüm alanları doldurunuz.');
+      return;
+    }
+
+    userData = { isim, soyisim, gorusulecekkisi, telefon, firma };
+    showStep('step-video');
+    // Player hazırsa yükle, değilse API hazır olduğunda yüklenecek
+    if (window.ytApiReady) initPlayer();
+  }
+
+  // ── YouTube IFrame API hazır callback ───────────────────────
+  window.ytApiReady = false;
+  function onYouTubeIframeAPIReady() {
+    window.ytApiReady = true;
+    // Eğer kullanıcı formu çoktan geçtiyse hemen başlat
+    if (document.getElementById('step-video').classList.contains('active')) {
+      initPlayer();
+    }
+  }
+
+  function initPlayer() {
+    if (player) return; // Zaten oluşturulmuş
+    player = new YT.Player('ytPlayer', {
+      videoId: VIDEO_ID,
+      playerVars: {
+        rel: 0,
+        modestbranding: 1,
+        controls: 1,
+        disablekb: 0
+      },
+      events: {
+        onStateChange: onPlayerStateChange
+      }
+    });
+  }
+
+  // ── YT Player durum değişikliği ─────────────────────────────
+  function onPlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+      videoOynuyor = true;
+      startTimer();
+    } else {
+      videoOynuyor = false;
+      stopTimer();
+    }
+  }
+
+  // ── Timer — sadece video oynarken çalışır ───────────────────
+  function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      gecenSure++;
+      const pct = Math.min((gecenSure / VIDEO_SURE) * 100, 100);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressLabel').textContent =
+        '%' + Math.floor(pct) + ' izlendi';
+
+      if (gecenSure >= Math.floor(VIDEO_SURE * TAMAMLANMA_ESIGI) && !mailGonderildi) {
+        stopTimer();
+        mailGonderildi = true;
+        mailAt('✅ Videoyu İzledi (min. %' + Math.round(TAMAMLANMA_ESIGI * 100) + ')');
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  // ── 2. ÖNLEM: Sekme gizlenince timer'ı dondur ───────────────
+  document.addEventListener('visibilitychange', () => {
+    const warning = document.getElementById('tabWarning');
+    if (!document.getElementById('step-video').classList.contains('active')) return;
+
+    if (document.hidden) {
+      // Sekme gizlendi → video varsa duraklat, timer durdur
+      stopTimer();
+      if (player && videoOynuyor) {
+        player.pauseVideo();
+      }
+      warning.classList.add('show');
+    } else {
+      // Sekmeye geri döndü → uyarıyı kaldır (video kendisi devam etmeyecek, kullanıcı play'e basacak)
+      warning.classList.remove('show');
+    }
+  });
+
+  // ── 3. ÖNLEM: Sayfa kapatılmak istenince uyar ───────────────
+  window.addEventListener('beforeunload', (e) => {
+    if (mailGonderildi) return; // Tamamlandıysa engelleme
+    if (gecenSure < 3) return;  // Henüz izlemeye başlamadıysa engelleme
+
+    // Tarayıcı native uyarı dialogunu göster
+    e.preventDefault();
+    e.returnValue = ''; // Chrome için gerekli
+
+    // Arka planda erken çıkış maili gönder
+    const pct = Math.floor((gecenSure / VIDEO_SURE) * 100);
+    const params = buildParams('❌ Erken Kapattı — %' + pct + ' izledi (' + gecenSure + ' saniye)');
+    emailjs.send(SERVICE_ID, TEMPLATE_ID, params).catch(() => {});
+  });
+
+  // ── Mail yardımcıları ────────────────────────────────────────
+  function buildParams(durum) {
+    const now   = new Date();
+    const tarih = now.toLocaleDateString('tr-TR') + ' ' + now.toLocaleTimeString('tr-TR');
+    return {
+      isim:             userData.isim,
+      soyisim:          userData.soyisim,
+      gorusulecekkisi:  userData.gorusulecekkisi,
+      telefon:          userData.telefon,
+      firma:            userData.firma,
+      durum:            durum,
+      tarih:            tarih
+    };
+  }
+
+  function mailAt(durum) {
+    const overlay = document.getElementById('sending-overlay');
+    overlay.classList.add('show');
+
+    emailjs.send(SERVICE_ID, TEMPLATE_ID, buildParams(durum))
+      .then(() => {
+        overlay.classList.remove('show');
+        showStep('step-success');
+      })
+      .catch((err) => {
+        overlay.classList.remove('show');
+        console.error('EmailJS hata:', err);
+        showStep('step-success');
+      });
+  }
+</script>
+</body>
+</html>
